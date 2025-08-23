@@ -1,0 +1,37 @@
+@import "tailwindcss";
+@plugin "flowbite-react/plugin/tailwindcss";
+@source "../.flowbite-react/class-list.json";
+
+@theme {
+  --color-primary: #6366f1; /* indigo-500 */
+  --color-secondary: #06b6d4; /* cyan-500 */
+  --color-accent: #f43f5e; /* rose-500 */
+  --color-success: #22c55e; /* green-500 */
+  --color-warning: #f59e0b; /* amber-500 */
+  --color-muted: #94a3b8; /* slate-400 */
+}
+
+:root {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light;
+  color: #0f172a;
+  background: linear-gradient(135deg, #fff7ed 0%, #f0f9ff 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a { text-decoration: none; }
+
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+
+/* Slider progress color tied to theme */
+input[type="range"]::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, var(--color-primary) var(--progress, 0%), #e5e7eb var(--progress, 0%));
+}
+input[type="range"]::-moz-range-track {
+  background: linear-gradient(to right, var(--color-primary) var(--progress, 0%), #e5e7eb var(--progress, 0%));
+}
