@@ -20,7 +20,7 @@ function SongPlayer() {
     setValidSong(false);
 
     try {
-      const response = await fetch(`${Constant.BASE_URL}/get/${songId}`, {
+      const response = await fetch(`${Constant.BASE_URL}/playsong/get/${songId}`, {
         method: "GET",
       });
 
@@ -29,7 +29,7 @@ function SongPlayer() {
       } else {
         setError("Song not found. Please check the ID.");
       }
-    } catch (err) {
+    } catch (error) {
       setError("Failed to connect to the server.");
     } finally {
       setLoading(false);
@@ -85,7 +85,7 @@ function SongPlayer() {
             <audio
               controls
               autoPlay
-              src={`${Constant.BASE_URL}/get/${songId}`}
+              src={`${Constant.BASE_URL}/playsong/get/${songId}`}
               className="w-full rounded-xl shadow"
             />
           </div>

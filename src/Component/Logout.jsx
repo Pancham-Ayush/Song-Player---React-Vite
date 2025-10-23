@@ -27,7 +27,7 @@ const Logout = () => {
     };
 
     performLogout();
-  }, [setUser, navigate]);
+  }, [setUser, navigate, setIsAdmin, setPlaylist, setUserEmail]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-rose-50 to-cyan-50 text-slate-900">

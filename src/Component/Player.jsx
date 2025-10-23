@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { SkipBack, SkipForward, Play, Pause, Volume2, VolumeX, Music, X } from 'lucide-react';
 import Constant from './Constant';
@@ -13,6 +13,19 @@ const Player = ({ queue, currentSongIndex, setCurrentSongIndex }) => {
   const audioRef = useRef(null);
 
   const currentSong = queue?.[currentSongIndex] || null;
+
+  const playNext = useCallback(() => {
+    if (currentSongIndex < queue.length - 1) {
+      setCurrentSongIndex(currentSongIndex + 1);
+    } else {
+      setIsPlaying(false);
+      setCurrentSongIndex(null);
+    }
+  }, [currentSongIndex, queue.length, setCurrentSongIndex]);
+
+  const playPrevious = useCallback(() => {
+    if (currentSongIndex > 0) setCurrentSongIndex(currentSongIndex - 1);
+  }, [currentSongIndex, setCurrentSongIndex]);
 
   // Update audio when song changes
   useEffect(() => {
@@ -79,19 +92,17 @@ const Player = ({ queue, currentSongIndex, setCurrentSongIndex }) => {
         });
       }
     };
-  }, [currentSongIndex, queue?.length]);
+  }, [currentSongIndex, queue?.length, playNext, playPrevious]);
 
   // Keyboard detection for mobile
   useEffect(() => {
     const updateViewportInset = () => {
-      try {
-        const vv = window.visualViewport;
-        if (!vv) return;
-        const layoutHeight = window.innerHeight;
-        const bottomInset = Math.max(0, layoutHeight - (vv.height + vv.offsetTop));
-        document.documentElement.style.setProperty('--player-vv-bottom', `${bottomInset}px`);
-        setIsKeyboardOpen(layoutHeight - vv.height > 150);
-      } catch {}
+      const vv = window.visualViewport;
+      if (!vv) return;
+      const layoutHeight = window.innerHeight;
+      const bottomInset = Math.max(0, layoutHeight - (vv.height + vv.offsetTop));
+      document.documentElement.style.setProperty('--player-vv-bottom', `${bottomInset}px`);
+      setIsKeyboardOpen(layoutHeight - vv.height > 150);
     };
     updateViewportInset();
     window.visualViewport?.addEventListener('resize', updateViewportInset);
@@ -125,19 +136,6 @@ const Player = ({ queue, currentSongIndex, setCurrentSongIndex }) => {
   };
 
   const togglePlayPause = () => setIsPlaying(!isPlaying);
-
-  const playNext = () => {
-    if (currentSongIndex < queue.length - 1) {
-      setCurrentSongIndex(currentSongIndex + 1);
-    } else {
-      setIsPlaying(false);
-      setCurrentSongIndex(null);
-    }
-  };
-
-  const playPrevious = () => {
-    if (currentSongIndex > 0) setCurrentSongIndex(currentSongIndex - 1);
-  };
 
   const closePlayer = () => {
     if (audioRef.current) {

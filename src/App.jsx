@@ -16,6 +16,7 @@ import AllPlayList from "./Component/AllPlayList";
 import Layout from "./Component/Layout";
 import Player from "./Component/Player";
 import DeleteSong from "./Component/DeleteSong";
+import SearchYt from "./Component/SearchYt";
 
 function App() {
   const { user, setUser, isMobile, setisMobile } = useContext(UserContext);
@@ -64,6 +65,7 @@ function App() {
                 <Route path="/play" element={user ? <SongPlayer /> : <Navigate to="/login" replace />} />
                 <Route path="/createplaylist" element={user ? <CreatePlaylist /> : <Navigate to="/login" replace />} />
                 <Route path="/playlist" element={user ? <AllPlayList playSong={playSong} /> : <Navigate to="/login" replace />} />
+                <Route path="/ytsearch" element={user ? <SearchYt/>: <Navigate to="/login" replace />} />
                 <Route path="/delete" element={user ? <DeleteSong playSong={playSong} /> : <Navigate to="/login" replace />} /> 
                 {/* Catch-all redirect */}
                 <Route path="*" element={<Navigate to="/" replace />} />

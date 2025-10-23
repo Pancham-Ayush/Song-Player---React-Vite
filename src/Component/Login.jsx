@@ -5,9 +5,9 @@ import Constant from './Constant';
 import { UserContext } from '../Context/ContextProvider';
 
 export default function Login({ setUser }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const { isAdmin, setIsAdmin } = useContext(UserContext);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { setIsAdmin } = useContext(UserContext);
   const [error, setError] = useState('');
   const { setUserEmail } = useContext(UserContext);
 
@@ -20,7 +20,7 @@ export default function Login({ setUser }) {
       setUser(me.data.username);
       setUserEmail(me.data.email);
       setIsAdmin(me.data.admin);
-    } catch (err) {
+    } catch (error) {
       setError('Login failed');
     }
   };

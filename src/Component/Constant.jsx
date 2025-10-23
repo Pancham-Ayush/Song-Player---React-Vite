@@ -1,5 +1,5 @@
 const Constant = {
-  BASE_URL: 'https://studylib.xyz/api'
+  BASE_URL: 'http://localhost:8082'
 };
 
 

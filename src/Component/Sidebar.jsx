@@ -15,6 +15,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         { to: '/playlist', text: 'My Playlists', icon: <ListMusic size={24} /> },
         { to: '/createplaylist', text: 'Create Playlist', icon: <PlusSquare size={24} /> },
         { to: '/upload', text: 'Upload Song', icon: <Upload size={24} /> },
+        { to: '/ytsearch', text: 'YouTube Search', icon: <Music size={24} /> },
       ];
 
       // Add admin-only links

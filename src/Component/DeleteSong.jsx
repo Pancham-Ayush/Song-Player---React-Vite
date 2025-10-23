@@ -2,14 +2,13 @@ import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import Constant from "./Constant";
 import { UserContext } from "../Context/ContextProvider";
-import { Trash2, XCircle } from "lucide-react"; // Removed PlayCircle
+import { Trash2 } from "lucide-react";
 
-function DeleteSong({ playSong }) {
-  const { user, isAdmin, email } = useContext(UserContext);
+function DeleteSong() {
+  const { useremail } = useContext(UserContext);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-  // Removed preview state
 
   // Function to fetch songs
   const fetchSongs = async () => {
@@ -32,20 +31,17 @@ function DeleteSong({ playSong }) {
     try {
       const res = await axios.post(`${Constant.BASE_URL}/delete`, {
         id,
-        email,
+        email: useremail,
       });
       alert(res.data.Message);
       // Re-fetch the song list to ensure it's up to date
       fetchSongs();
       setSelected(null);
-      // Removed preview state
     } catch (err) {
       alert("Error deleting song or unauthorized!");
       console.error(err);
     }
   };
-
-  // Removed handlePreview function
 
   if (loading) return <p className="text-center">Loading songs...</p>;
 
@@ -77,12 +73,11 @@ function DeleteSong({ playSong }) {
                       onClick={() => setSelected(null)}
                       className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-lg flex items-center gap-1"
                     >
-                      <XCircle size={18} /> Cancel
+                      Cancel
                     </button>
                   </div>
                 ) : (
                   <div className="flex gap-2">
-                    {/* The PlayCircle button and handlePreview logic are now gone */}
                     <button
                       onClick={() => setSelected(song.id)}
                       className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg flex items-center gap-1"

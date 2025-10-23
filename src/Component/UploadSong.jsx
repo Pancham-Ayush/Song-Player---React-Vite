@@ -6,7 +6,16 @@ import { UserContext } from '../Context/ContextProvider';
 
 function UploadSong() {
   const navigate = useNavigate();
-  const { isMobile, uploadPermission, uploadMessage, isAdmin ,useremail } = useContext(UserContext);
+  const { isMobile, uploadPermission, isAdmin ,useremail } = useContext(UserContext);
+
+  const [file, setFile] = useState(null);
+  const [song, setSong] = useState({
+    name: "",
+    artist: "",
+    genre: "",
+    description: ""
+  });
+  const [message, setMessage] = useState("");
 
   // ✅ Block if not admin
   if (!isAdmin) {
@@ -32,15 +41,6 @@ function UploadSong() {
       </div>
     );
   }
-
-  const [file, setFile] = useState(null);
-  const [song, setSong] = useState({
-    name: "",
-    artist: "",
-    genre: "",
-    description: ""
-  });
-  const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
     setSong({

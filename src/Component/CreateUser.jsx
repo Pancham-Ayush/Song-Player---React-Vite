@@ -12,7 +12,7 @@ function CreateUser() {
   const [shouldNavigate, setShouldNavigate] = useState(false);
   const { user, setUser } = useContext(UserContext);  
   const { setIsAdmin } = useContext(UserContext);
-  const { useremail, setUserEmail } = useContext(UserContext);
+  const { setUserEmail } = useContext(UserContext);
   const navigate = useNavigate();
 
   // Navigate after user state is properly set
@@ -36,7 +36,7 @@ function CreateUser() {
       } else {
         setError(cur.data.message);
       }
-    } catch (err) {
+    } catch (error) {
       setError('Create user failed');
     }
   };

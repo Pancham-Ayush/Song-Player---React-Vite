@@ -25,7 +25,7 @@ function AllPlayList({ playSong }) {
         console.error('Error fetching playlists:', error);
       })
       .finally(() => setLoading(false));
-  }, [user, useremail]);
+  }, [user, useremail, setPlaylist]);
 
   // Fetch songs of selected playlist
   const playlistOnClick = async (playlistId) => {
