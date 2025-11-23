@@ -17,7 +17,9 @@ function AllPlayList({ playSong }) {
 
     setLoading(true);
     axios
-      .post(`${Constant.BASE_URL}/getplaylist`, { email: useremail })
+      .post(`${Constant.BASE_URL}/getplaylist`, 
+        { email: useremail },
+        { withCredentials: true})
       .then((response) => {
         setPlaylist(response.data?.playlists || []);
       })

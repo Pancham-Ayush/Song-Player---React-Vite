@@ -1,27 +1,66 @@
 import React, { useState, useContext } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Constant from './Constant';
 import { UserContext } from '../Context/ContextProvider';
 
 export default function Login({ setUser }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { setIsAdmin } = useContext(UserContext);
   const [error, setError] = useState('');
-  const { setUserEmail } = useContext(UserContext);
+  const { setIsAdmin, setUserEmail } = useContext(UserContext);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      await axios.post(`${Constant.BASE_URL}/login`, { email, password }, { withCredentials: true });
-      const me = await axios.get(`${Constant.BASE_URL}/current-user`, { withCredentials: true });
-      setUser(me.data.username);
-      setUserEmail(me.data.email);
-      setIsAdmin(me.data.admin);
-    } catch (error) {
+      const res = await axios.post(
+        `${Constant.Login_URL}/manual-login`,
+        { email, password },
+        { withCredentials: true }
+      );
+      setUser(res.data.username);
+      setUserEmail(res.data.email);
+      setIsAdmin(res.data.admin);
+      navigate('/'); 
+    } catch (err) {
+      console.error(err); 
       setError('Login failed');
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      // Open Google OAuth in a popup
+      const popup = window.open(
+        `${Constant.Login_URL}/oauth2/authorization/google?prompt=select_account`,
+        "_blank",
+        "width=500,height=600"
+      );
+
+      // Polling to check when popup closes
+      const checkPopup = setInterval(async () => {
+        if (popup.closed) {
+          clearInterval(checkPopup);
+          try {
+            // After successful login, fetch user info from Security Microservice
+            const res = await axios.get(`${Constant.Login_URL}/google/me`, {
+              withCredentials: true,
+            });
+            setUser(res.data.username);
+            setUserEmail(res.data.email);
+            setIsAdmin(res.data.admin);
+            navigate('/');
+          } catch (err) {
+            console.error(err);
+            setError('Google login failed');
+          }
+        }
+      }, 500);
+    } catch (err) {
+      console.error(err);
+      setError('Google login failed');
     }
   };
 
@@ -58,6 +97,14 @@ export default function Login({ setUser }) {
             Login
           </button>
         </form>
+
+        <button
+          onClick={handleGoogleLogin}
+          className="w-full mt-4 py-3 rounded-xl font-semibold transition-colors duration-200 bg-red-600 text-white hover:opacity-90"
+        >
+          Login with Google
+        </button>
+
         <p className="mt-6 text-center text-sm text-slate-600">
           Don't have an account? <Link to="/createuser" className="text-indigo-600 hover:underline">Create one</Link>
         </p>

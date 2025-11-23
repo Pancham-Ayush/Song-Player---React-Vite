@@ -13,7 +13,10 @@ function DeleteSong() {
   // Function to fetch songs
   const fetchSongs = async () => {
     try {
-      const res = await axios.get(`${Constant.BASE_URL}/allsongs/delete`);
+      const res = await axios.get(
+        `${Constant.BASE_URL}/allsongs/delete`,
+        { withCredentials: true }
+      );
       setSongs(res.data.songs);
     } catch (err) {
       console.error("Error fetching songs:", err);
@@ -32,7 +35,8 @@ function DeleteSong() {
       const res = await axios.post(`${Constant.BASE_URL}/delete`, {
         id,
         email: useremail,
-      });
+      },
+    {withCredentials: true});
       alert(res.data.Message);
       // Re-fetch the song list to ensure it's up to date
       fetchSongs();

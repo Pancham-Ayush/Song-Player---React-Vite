@@ -30,7 +30,7 @@ const Player = ({ queue, currentSongIndex, setCurrentSongIndex }) => {
   // Update audio when song changes
   useEffect(() => {
     if (currentSong && audioRef.current) {
-      audioRef.current.src = `${Constant.BASE_URL}/get/${currentSong.id}`;
+      audioRef.current.src = `${Constant.Player_URL}/get/${currentSong.id}`;
       audioRef.current.load();
       setProgress(0);
       setDuration(0);

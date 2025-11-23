@@ -14,7 +14,7 @@ const Logout = () => {
   useEffect(() => {
     const performLogout = async () => {
       try {
-        await axios.post(`${Constant.BASE_URL}/logout`, {}, { withCredentials: true });
+        await axios.post(`${Constant.Login_URL}/logout`, {}, { withCredentials: true });
       } catch (err) {
         console.error('Logout failed on server, clearing client session anyway', err);
       } finally {

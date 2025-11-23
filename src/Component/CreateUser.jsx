@@ -11,14 +11,13 @@ function CreateUser() {
   const [error, setError] = useState('');
   const [shouldNavigate, setShouldNavigate] = useState(false);
   const { user, setUser } = useContext(UserContext);  
-  const { setIsAdmin } = useContext(UserContext);
-  const { setUserEmail } = useContext(UserContext);
+
   const navigate = useNavigate();
 
   // Navigate after user state is properly set
   useEffect(() => {
     if (shouldNavigate && user) {
-      navigate('/');
+      navigate('/login');
       setShouldNavigate(false);
     }
   }, [user, shouldNavigate, navigate]);
@@ -27,15 +26,17 @@ function CreateUser() {
     e.preventDefault();
     setError('');
     try {
-      const cur = await axios.post(`${Constant.BASE_URL}/createuser`, { name, email: tempemail, password }, { withCredentials: true });
-      if (cur.data.message === "User created successfully") {
-        setUser(cur.data.username);
-        setIsAdmin(cur.data.admin);
-        setUserEmail(cur.data.email);
-        setShouldNavigate(true);
-      } else {
-        setError(cur.data.message);
-      }
+      const cur = await axios.post(`${Constant.Login_URL}/manual-create-user`, 
+        { name, email: tempemail, password }, 
+        { withCredentials: true });
+        if (cur.data === "Created Successfully") {
+      setError("User Created Successfully ");
+      setShouldNavigate(true); 
+    } 
+    else {
+      setError(cur.data);
+    }
+
     } catch (error) {
       setError('Create user failed');
     }

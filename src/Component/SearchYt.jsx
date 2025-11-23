@@ -73,7 +73,9 @@ function SearchYt() {
     setStatusMessage("");
 
     try {
-      const res = await axios.get(`${Constant.BASE_URL}/SearchOnYt`, {
+      const res = await axios.get(`${Constant.BASE_URL}/SearchOnYt`, 
+        {
+                  withCredentials: true ,
         params: { query: searchQuery, token: token },
       });
 
@@ -115,7 +117,8 @@ function SearchYt() {
     try {
       const res = await axios.post(
         `${Constant.BASE_URL}/AiDownloading`,
-        payload
+        payload,
+        { withCredentials: true }
       );
       console.log("Download response:", res.data);
       setStatusMessage(res.data);

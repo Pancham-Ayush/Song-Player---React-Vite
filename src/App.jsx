@@ -24,21 +24,6 @@ function App() {
   const [queue, setQueue] = useState([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(null);
 
-  // Detect logged in user and device type
-  useEffect(() => {
-    axios.get(`${Constant.BASE_URL}/current-user`, { withCredentials: true })
-      .then(res => {
-  
-        setUser(res.data.username);
-        // If backend returns mobile flag
-        setisMobile(res.data.mobile || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent));
-      })
-      .catch(() => {
-        setUser(null);
-        setisMobile(/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent));
-      });
-  }, []);
-
   const playSong = (songs, index) => {
     setQueue(songs);
     setCurrentSongIndex(index);
@@ -62,7 +47,10 @@ function App() {
                 <Route path="/songs" element={<SongList playSong={playSong} />} />
                 {/* UploadSong is hidden on mobile */}
                 <Route path="/upload" element={user ? <UploadSong /> : <Navigate to="/" replace />} />
-                <Route path="/play" element={user ? <SongPlayer /> : <Navigate to="/login" replace />} />
+<Route 
+  path="/play" 
+  element={user ? <SongPlayer /> : <Navigate to="/login" replace />} 
+/>
                 <Route path="/createplaylist" element={user ? <CreatePlaylist /> : <Navigate to="/login" replace />} />
                 <Route path="/playlist" element={user ? <AllPlayList playSong={playSong} /> : <Navigate to="/login" replace />} />
                 <Route path="/ytsearch" element={user ? <SearchYt/>: <Navigate to="/login" replace />} />

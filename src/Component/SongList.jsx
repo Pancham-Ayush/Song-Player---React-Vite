@@ -16,7 +16,6 @@ function SongList({ playSong }) {
 
   const { useremail } = useContext(UserContext);
 
-  // Fetch playlists
   useEffect(() => {
     const fetchPlaylist = async () => {
       if (!useremail) return;
@@ -36,26 +35,26 @@ function SongList({ playSong }) {
 
   // Fetch songs with pagination
   useEffect(() => {
-    const fetchSongs = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/allsongs`, {
-          params: { page: currentPage, chunk: 20 }
-        });
-        const newSongs = res.data.content || [];
-        setSongs(newSongs);
-        setTotalPage(res.data.totalPages || 0);
-        setCurrentSongIndex(0);
-      } catch (err) {
-        console.error("Failed to fetch songs:", err);
-      }
-    };
-    fetchSongs();
-  }, [currentPage]);
+  const fetchSongs = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/allsongs`, {
+        params: { page: currentPage, chunk: 20 },
+        withCredentials: true, 
+      });
+      const newSongs = res.data.content || [];
+      setSongs(newSongs);
+      setTotalPage(res.data.totalPages || 0);
+      setCurrentSongIndex(0);
+    } catch (err) {
+      console.error("Failed to fetch songs:", err);
+    }
+  };
+  fetchSongs();
+}, [currentPage]);
 
   // Play a song by index
   const handlePlay = (index) => {
     setCurrentSongIndex(index);
-    // Pass the entire songs array and the index to the global player
     playSong(songs, index);
   };
 

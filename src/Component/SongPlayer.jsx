@@ -20,7 +20,7 @@ function SongPlayer() {
     setValidSong(false);
 
     try {
-      const response = await fetch(`${Constant.BASE_URL}/playsong/get/${songId}`, {
+      const response = await fetch(`${Constant.Player_URL}/get/${songId}`, {
         method: "GET",
       });
 
@@ -85,7 +85,7 @@ function SongPlayer() {
             <audio
               controls
               autoPlay
-              src={`${Constant.BASE_URL}/playsong/get/${songId}`}
+              src={`${Constant.Player_URL}/get/${songId}`}
               className="w-full rounded-xl shadow"
             />
           </div>
