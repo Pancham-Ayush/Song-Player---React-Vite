@@ -2,98 +2,179 @@ import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import Constant from "./Constant";
 import { UserContext } from "../Context/ContextProvider";
-import { Trash2 } from "lucide-react";
+import { Trash2, Music } from "lucide-react";
+
+const BASE_URL = Constant.BASE_URL;
 
 function DeleteSong() {
   const { useremail } = useContext(UserContext);
+
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
 
-  // Function to fetch songs
-  const fetchSongs = async () => {
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPage, setTotalPage] = useState(0);
+  const pageSize = 20;
+
+  // 🔹 Fetch Songs (Paginated)
+  const fetchSongs = async (page = currentPage) => {
     try {
-      const res = await axios.get(
-        `${Constant.BASE_URL}/allsongs/delete`,
-        { withCredentials: true }
-      );
-      setSongs(res.data.songs);
+      setLoading(true);
+
+      const res = await axios.get(`${Constant.Search_URL}/allsongs`, {
+        params: {
+          page: page,
+          chunk: pageSize,
+        },
+        withCredentials: true,
+      });
+
+      setSongs(res.data.content || []);
+      setTotalPage(res.data.totalPages || 0);
     } catch (err) {
-      console.error("Error fetching songs:", err);
+      console.error("❌ Error fetching songs:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Initial fetch on component mount
+  // 🔹 Load whenever page changes
   useEffect(() => {
-    fetchSongs();
-  }, []);
+    fetchSongs(currentPage);
+  }, [currentPage]);
 
-  const handleDelete = async (id) => {
+  // 🔹 Delete with smart pagination fix
+  const handleDelete = async () => {
     try {
-      const res = await axios.post(`${Constant.BASE_URL}/delete`, {
-        id,
-        email: useremail,
-      },
-    {withCredentials: true});
-      alert(res.data.Message);
-      // Re-fetch the song list to ensure it's up to date
-      fetchSongs();
+      await axios.post(
+        `${BASE_URL}/delete`,
+        { id: selected, email: useremail },
+        { withCredentials: true }
+      );
+
       setSelected(null);
+
+      // Reload current page
+      const res = await axios.get(`${Constant.Search_URL}/allsongs`, {
+        params: { page: currentPage, chunk: pageSize },
+        withCredentials: true,
+      });
+
+      const newSongs = res.data.content || [];
+      const newTotalPages = res.data.totalPages || 0;
+
+      // If current page becomes empty → move back
+      if (newSongs.length === 0 && currentPage > 0) {
+        setCurrentPage((p) => p - 1);
+      } else {
+        setSongs(newSongs);
+        setTotalPage(newTotalPages);
+      }
+
     } catch (err) {
-      alert("Error deleting song or unauthorized!");
-      console.error(err);
+      console.error("❌ Delete error:", err);
+      alert("Unauthorized or failed to delete song");
     }
   };
 
-  if (loading) return <p className="text-center">Loading songs...</p>;
+  if (loading) {
+    return <p className="text-center mt-10">Loading songs...</p>;
+  }
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Delete Songs</h2>
-      {songs.length === 0 ? (
-        <p>No songs available</p>
-      ) : (
-        <div className="grid gap-4">
-          {songs.map((song) => (
+    <div className="text-slate-900">
+      <h1 className="text-4xl font-extrabold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-rose-600 via-red-500 to-orange-500">
+        Delete Songs
+      </h1>
+
+      <div className="space-y-4">
+        {songs.length > 0 ? (
+          songs.map((song) => (
             <div
               key={song.id}
-              className={`p-4 rounded-xl shadow-md flex flex-col gap-2 ${
-                selected === song.id ? "bg-red-100" : "bg-gray-100"
-              }`}
+              className="relative flex items-center p-4 rounded-2xl bg-white/80 backdrop-blur-md hover:bg-white transition duration-200 cursor-pointer shadow hover:shadow-md border border-slate-200"
             >
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{song.name}</span>
-                {selected === song.id ? (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleDelete(song.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg flex items-center gap-1"
-                    >
-                      <Trash2 size={18} /> Delete
-                    </button>
-                    <button
-                      onClick={() => setSelected(null)}
-                      className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-lg flex items-center gap-1"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setSelected(song.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg flex items-center gap-1"
-                    >
-                      <Trash2 size={18} /> Delete
-                    </button>
-                  </div>
-                )}
+              <div className="flex-1 flex items-center gap-4">
+                <Music size={24} className="text-rose-600" />
+                <div>
+                  <p className="font-semibold">{song.name}</p>
+                  <p className="text-sm text-slate-500">{song.artist}</p>
+                </div>
               </div>
-              
+
+              <button
+                onClick={() => setSelected(song.id)}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl flex items-center gap-2"
+              >
+                <Trash2 size={18} />
+                Delete
+              </button>
             </div>
-          ))}
+          ))
+        ) : (
+          <p className="text-center text-slate-500">No songs available.</p>
+        )}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-center items-center mt-8 gap-3">
+        <button
+          disabled={currentPage === 0}
+          onClick={() => setCurrentPage((p) => Math.max(p - 1, 0))}
+          className="px-4 py-2 bg-rose-600 text-white rounded-xl text-sm disabled:opacity-50 hover:bg-rose-700"
+        >
+          Previous
+        </button>
+
+        <span className="text-sm font-medium text-slate-600">
+          Page {currentPage + 1} of {totalPage}
+        </span>
+
+        <button
+          disabled={currentPage + 1 >= totalPage}
+          onClick={() => setCurrentPage((p) => p + 1)}
+          className="px-4 py-2 bg-orange-600 text-white rounded-xl text-sm disabled:opacity-50 hover:bg-orange-700"
+        >
+          Next
+        </button>
+      </div>
+
+      {/* Delete Confirmation */}
+      {selected && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center"
+          onClick={() => setSelected(null)}
+        >
+          <div
+            className="w-full md:max-w-md rounded-2xl bg-white border border-slate-200 shadow-xl p-6 mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4 text-red-600">
+              Confirm Delete
+            </h3>
+
+            <p className="text-sm text-slate-600 mb-6">
+              Are you sure you want to permanently delete this song?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setSelected(null)}
+                className="px-4 py-2 rounded-xl bg-gray-400 hover:bg-gray-500 text-white"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+              >
+                <Trash2 size={18} />
+                Confirm Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

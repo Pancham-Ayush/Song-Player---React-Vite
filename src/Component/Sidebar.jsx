@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Music, ListMusic, Upload, PlusSquare, LogOut, LogIn,DeleteIcon } from 'lucide-react';
+import { Home, Music, ListMusic, Upload, PlusSquare, LogOut, LogIn,DeleteIcon, Search} from 'lucide-react';
 import { UserContext } from '../Context/ContextProvider';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
@@ -11,11 +11,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     if (user) {
       const loggedInLinks = [
         { to: '/', text: 'Home', icon: <Home size={24} /> },
+        { to: '/search', text: 'Search Songs', icon: <Search size={24} /> },
         { to: '/songs', text: 'All Songs', icon: <Music size={24} /> },
         { to: '/playlist', text: 'My Playlists', icon: <ListMusic size={24} /> },
         { to: '/createplaylist', text: 'Create Playlist', icon: <PlusSquare size={24} /> },
         { to: '/upload', text: 'Upload Song', icon: <Upload size={24} /> },
         { to: '/ytsearch', text: 'YouTube Search', icon: <Music size={24} /> },
+        
       ];
 
       // Add admin-only links

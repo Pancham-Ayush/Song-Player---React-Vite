@@ -14,7 +14,7 @@ function CreatePlaylist() {
     setError('');
     setSuccess('');
     try {
-      const cur = await axios.post(`${Constant.BASE_URL}/createplaylist`, { name: playlistName, email: useremail }, { withCredentials: true });
+      const cur = await axios.post(`${Constant.Search_URL}/createplaylist`, { name: playlistName, email: useremail }, { withCredentials: true });
       if (cur.data.message === "Playlist created successfully") {
         setSuccess(cur.data.message);
         setPlaylistName("");

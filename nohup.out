@@ -1,0 +1,11 @@
+
+> music-player@0.0.0 dev
+> vite
+
+Generating .flowbite-react/class-list.json file...
+
+  VITE v7.1.10  ready in 1071 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`

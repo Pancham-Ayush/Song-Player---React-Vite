@@ -17,7 +17,7 @@ function AllPlayList({ playSong }) {
 
     setLoading(true);
     axios
-      .post(`${Constant.BASE_URL}/getplaylist`, 
+      .post(`${Constant.Search_URL}/getplaylist`, 
         { email: useremail },
         { withCredentials: true})
       .then((response) => {
@@ -39,7 +39,7 @@ function AllPlayList({ playSong }) {
 
     setLoading(true);
     try {
-      const res = await axios.get(`${Constant.BASE_URL}/playlistsongs`, {
+      const res = await axios.get(`${Constant.Search_URL}/playlistsongs`, {
         params: { playlistid: playlistId },
         withCredentials: true,
       });

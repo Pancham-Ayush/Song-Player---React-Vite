@@ -4,7 +4,7 @@ import axios from "axios";
 import { UserContext } from "../Context/ContextProvider";
 import { Music, MoreVertical, ListMusic } from 'lucide-react';
 
-const BASE_URL = Constant.BASE_URL;
+const Search_URL = Constant.Search_URL;
 
 function SongList({ playSong }) {
   const [songs, setSongs] = useState([]);
@@ -21,7 +21,7 @@ function SongList({ playSong }) {
       if (!useremail) return;
       try {
         const response = await axios.post(
-          `${BASE_URL}/getplaylist`,
+          `${Search_URL}/getplaylist`,
           { email: useremail },
           { withCredentials: true }
         );
@@ -37,7 +37,7 @@ function SongList({ playSong }) {
   useEffect(() => {
   const fetchSongs = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/allsongs`, {
+      const res = await axios.get(`${Search_URL}/allsongs`, {
         params: { page: currentPage, chunk: 20 },
         withCredentials: true, 
       });
@@ -73,7 +73,7 @@ function SongList({ playSong }) {
     
     try {
       const res = await axios.post(
-        `${BASE_URL}/addtoplaylist`,
+        `${Search_URL}/addtoplaylist`,
         { 
           email: useremail, 
           songid: songId.toString(), 
