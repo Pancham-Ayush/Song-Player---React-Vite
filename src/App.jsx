@@ -23,37 +23,66 @@ function App() {
   const [queue, setQueue] = useState([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(null);
 
-  /* 🔔 NOTIFICATION STATE */
+  /* 🔔 Notifications now store SONG OBJECT */
   const [notifications, setNotifications] = useState([]);
 
+  /* ===============================
+     PLAY FULL LIST (playlist/search)
+     =============================== */
   const playSong = (songs, index) => {
     setQueue(songs);
     setCurrentSongIndex(index);
   };
 
-  /* 🔥 SSE CONNECTION – OPEN ONCE */
-  useEffect(() => {
-    if (!user) return; // only connect when logged in
+  /* =================================================
+     PLAY FROM NOTIFICATION (interrupt + continue queue)
+     ================================================= */
+  const playSongFromNotification = (song) => {
+    setQueue((prevQueue) => {
+      // If nothing is playing
+      if (currentSongIndex === null || prevQueue.length === 0) {
+        setCurrentSongIndex(0);
+        return [song];
+      }
 
-const eventSource = new EventSource(
-  "http://localhost:8080/s3/upload/notification/stream",
-  { withCredentials: true }
-);
+      const before = prevQueue.slice(0, currentSongIndex + 1);
+      const after = prevQueue.slice(currentSongIndex + 1);
+
+      return [...before, song, ...after];
+    });
+
+    // Jump playback to inserted song
+    setCurrentSongIndex((prev) => prev + 1);
+  };
+
+  /* 🔥 SSE CONNECTION */
+  useEffect(() => {
+    if (!user) return;
+
+    const eventSource = new EventSource(
+      "http://localhost:8080/s3/upload/notification/stream",
+      { withCredentials: true }
+    );
 
     eventSource.onmessage = (event) => {
-      setNotifications((prev) => [
-        { id: Date.now(), message: event.data },
-        ...prev,
-      ]);
+      try {
+        const song = JSON.parse(event.data);
+
+        setNotifications((prev) => [
+          {
+            id: Date.now(),
+            song,
+          },
+          ...prev,
+        ]);
+      } catch (e) {
+        console.error("Invalid SSE data:", event.data);
+      }
     };
 
-    eventSource.onerror = () => {
-      eventSource.close();
-    };
+    eventSource.onerror = () => eventSource.close();
 
-    return () => {
-      eventSource.close();
-    };
+    return () => eventSource.close();
   }, [user]);
 
   return (
@@ -77,13 +106,40 @@ const eventSource = new EventSource(
               padding: "10px 16px",
               marginBottom: "8px",
               borderRadius: "6px",
-              minWidth: "250px",
+              minWidth: "260px",
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
+              alignItems: "flex-start",
             }}
           >
-            <span>{n.message}</span>
+            <div>
+              <strong>{n.song.name}</strong>
+              <div style={{ fontSize: "12px", color: "#aaa" }}>
+                {n.song.artist}
+              </div>
+
+              <button
+                onClick={() => {
+                  playSongFromNotification(n.song);
+                  setNotifications((prev) =>
+                    prev.filter((x) => x.id !== n.id)
+                  );
+                }}
+                style={{
+                  marginTop: "6px",
+                  background: "#1db954",
+                  border: "none",
+                  color: "#fff",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                }}
+              >
+                ▶ Play
+              </button>
+            </div>
+
             <button
               onClick={() =>
                 setNotifications((prev) =>
@@ -91,7 +147,6 @@ const eventSource = new EventSource(
                 )
               }
               style={{
-                marginLeft: "12px",
                 background: "transparent",
                 border: "none",
                 color: "#aaa",
@@ -107,7 +162,6 @@ const eventSource = new EventSource(
 
       {/* ROUTES */}
       <Routes>
-        {/* Auth routes */}
         <Route
           path="/login"
           element={!user ? <Login setUser={setUser} /> : <Navigate to="/" replace />}
@@ -118,7 +172,6 @@ const eventSource = new EventSource(
         />
         <Route path="/logout" element={<Logout />} />
 
-        {/* Main App Routes */}
         <Route
           path="/*"
           element={
@@ -140,7 +193,7 @@ const eventSource = new EventSource(
         />
       </Routes>
 
-      {/* PLAYER */}
+      {/* 🎵 PLAYER */}
       <Player
         queue={queue}
         currentSongIndex={currentSongIndex}

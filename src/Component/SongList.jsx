@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import Constant from "./Constant";
 import axios from "axios";
 import { UserContext } from "../Context/ContextProvider";
-import { Music, MoreVertical, ListMusic } from 'lucide-react';
+import { Music, MoreVertical, ListMusic } from "lucide-react";
 
 const Search_URL = Constant.Search_URL;
 
@@ -10,96 +10,130 @@ function SongList({ playSong }) {
   const [songs, setSongs] = useState([]);
   const [playlist, setPlaylist] = useState([]);
   const [openMenu, setOpenMenu] = useState(null);
-  const [totalPage, setTotalPage] = useState(0);
-  const [currentPage, setCurrentPage] = useState(0);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
+
+  // 🔑 CURSOR STACK (single source of truth)
+  const [cursorStack, setCursorStack] = useState([null]);
+  const [loading, setLoading] = useState(false);
 
   const { useremail } = useContext(UserContext);
 
+  /* ================= PLAYLIST ================= */
+
   useEffect(() => {
-    const fetchPlaylist = async () => {
-      if (!useremail) return;
-      try {
-        const response = await axios.post(
-          `${Search_URL}/getplaylist`,
-          { email: useremail },
-          { withCredentials: true }
-        );
-        setPlaylist(response.data.playlists || []);
-      } catch (err) {
-        console.error("Failed to fetch playlist:", err);
-      }
-    };
-    fetchPlaylist();
+    if (!useremail) return;
+
+    axios
+      .post(
+        `${Search_URL}/getplaylist`,
+        { email: useremail },
+        { withCredentials: true }
+      )
+      .then((res) => setPlaylist(res.data.playlists || []))
+      .catch(() => console.error("Failed to fetch playlist"));
   }, [useremail]);
 
-  // Fetch songs with pagination
+  /* ================= GRAPHQL FETCH ================= */
+
+  const fetchSongs = async (cursor) => {
+    const res = await axios.post(
+      `${Search_URL}/graphql`,
+      {
+        query: `
+          query GetAllSongs($cursor: String, $chunkSize: Int!) {
+            getAllSongs(cursor: $cursor, chunkSize: $chunkSize) {
+              content {
+                id
+                name
+                artist
+              }
+              nextCursor
+            }
+          }
+        `,
+        variables: {
+          cursor,
+          chunkSize: 10,
+        },
+      },
+      { withCredentials: true }
+    );
+
+    return res.data.data.getAllSongs;
+  };
+
+  /* ================= INITIAL LOAD ================= */
+
   useEffect(() => {
-  const fetchSongs = async () => {
+    nextPage(); // uses null cursor
+  }, []);
+
+  /* ================= NAVIGATION ================= */
+
+  const nextPage = async () => {
+    if (loading) return;
+
+    const currentCursor = cursorStack[cursorStack.length - 1];
+    if (currentCursor === null && cursorStack.length > 1) return;
+
+    setLoading(true);
     try {
-      const res = await axios.get(`${Search_URL}/allsongs`, {
-        params: { page: currentPage, chunk: 20 },
-        withCredentials: true, 
-      });
-      const newSongs = res.data.content || [];
-      setSongs(newSongs);
-      setTotalPage(res.data.totalPages || 0);
+      const page = await fetchSongs(currentCursor);
+      setSongs(page.content);
       setCurrentSongIndex(0);
-    } catch (err) {
-      console.error("Failed to fetch songs:", err);
+
+      if (page.nextCursor !== null) {
+        setCursorStack((prev) => [...prev, page.nextCursor]);
+      }
+    } finally {
+      setLoading(false);
     }
   };
-  fetchSongs();
-}, [currentPage]);
 
-  // Play a song by index
+  const previousPage = async () => {
+    if (cursorStack.length <= 1 || loading) return;
+
+    setLoading(true);
+    try {
+      const newStack = [...cursorStack];
+      newStack.pop(); // remove current
+      const prevCursor = newStack[newStack.length - 1];
+
+      const page = await fetchSongs(prevCursor);
+      setSongs(page.content);
+      setCurrentSongIndex(0);
+      setCursorStack(newStack);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ================= PLAY ================= */
+
   const handlePlay = (index) => {
     setCurrentSongIndex(index);
     playSong(songs, index);
   };
 
+  /* ================= PLAYLIST ADD ================= */
 
-  // Add song to playlist
   const handleAddToPlaylist = async (songId, playlistId) => {
-    if (!useremail) {
-      alert("Please log in to add songs to playlist");
-      return;
-    }
-    
-    if (!songId || !playlistId) {
-      alert("Invalid song or playlist selection");
-      return;
-    }
-    
-    try {
-      const res = await axios.post(
-        `${Search_URL}/addtoplaylist`,
-        { 
-          email: useremail, 
-          songid: songId.toString(), 
-          playlistid: playlistId.toString() 
-        },
-        { withCredentials: true }
-      );
-      
-      alert(res.data.message || "Song added to playlist successfully");
-      setOpenMenu(null);
-    } catch (err) {
-      let errorMessage = "Failed to add song to playlist";
-      
-      if (err.response && err.response.data && err.response.data.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.request) {
-        errorMessage = "Network error - please check your connection";
-      }
-      
-      alert(errorMessage);
-    }
+    if (!useremail) return alert("Login required");
+
+    await axios.post(
+      `${Search_URL}/addtoplaylist`,
+      {
+        email: useremail,
+        songid: songId.toString(),
+        playlistid: playlistId.toString(),
+      },
+      { withCredentials: true }
+    );
+
+    setOpenMenu(null);
   };
 
-  const toggleMenu = (songId) => {
-    setOpenMenu(openMenu === songId ? null : songId);
-  };
+  /* ================= UI ================= */
 
   return (
     <div className="text-slate-900">
@@ -108,93 +142,74 @@ function SongList({ playSong }) {
       </h1>
 
       <div className="space-y-4">
-        {songs.length > 0 ? (
-          songs.map((song, index) => (
+        {songs.map((song, index) => (
+          <div
+            key={song.id}
+            className="relative flex items-center p-4 rounded-2xl bg-white/80 hover:bg-white shadow border"
+          >
             <div
-              key={song.id}
-              className={`relative flex items-center p-4 rounded-2xl bg-white/80 backdrop-blur-md hover:bg-white transition duration-200 cursor-pointer shadow hover:shadow-md border border-slate-200 ${openMenu === song.id ? 'z-40' : 'z-0'}`}
+              onClick={() => handlePlay(index)}
+              className="flex-1 flex items-center cursor-pointer"
             >
-              <div onClick={() => handlePlay(index)} className="flex-1 flex items-center">
-                <Music size={24} className="mr-4 text-indigo-600" />
-                <div>
-                  <p className="font-semibold">{song.name}</p>
-                  <p className="text-sm text-slate-500">{song.artist}</p>
-                </div>
-              </div>
-
-              <div className="relative z-50">
-                <button onClick={() => toggleMenu(song.id)} className="p-2 rounded-full hover:bg-slate-100">
-                  <MoreVertical size={20} />
-                </button>
+              <Music size={24} className="mr-4 text-indigo-600" />
+              <div>
+                <p className="font-semibold">{song.name}</p>
+                <p className="text-sm text-slate-500">{song.artist}</p>
               </div>
             </div>
-          ))
-        ) : (
-          <p className="text-center text-slate-500">No songs available.</p>
-        )}
+
+            <button
+              onClick={() => setOpenMenu(song.id)}
+              className="p-2 rounded-full hover:bg-slate-100"
+            >
+              <MoreVertical size={20} />
+            </button>
+          </div>
+        ))}
       </div>
 
-
-      {/* Pagination */}
-      <div className="flex justify-center items-center mt-8 gap-3">
+      {/* NAVIGATION */}
+      <div className="flex justify-center gap-4 mt-8">
         <button
-          disabled={currentPage === 0}
-          onClick={() => setCurrentPage((p) => Math.max(p - 1, 0))}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm disabled:opacity-50 hover:bg-indigo-700"
+          onClick={previousPage}
+          disabled={cursorStack.length <= 1 || loading}
+          className="px-4 py-2 bg-slate-600 text-white rounded-xl disabled:opacity-50"
         >
           Previous
         </button>
-        <span className="text-sm font-medium text-slate-600">
-          Page {currentPage + 1} of {totalPage}
-        </span>
+
         <button
-          disabled={currentPage + 1 >= totalPage}
-          onClick={() => setCurrentPage((p) => p + 1)}
-          className="px-4 py-2 bg-cyan-600 text-white rounded-xl text-sm disabled:opacity-50 hover:bg-cyan-700"
+          onClick={nextPage}
+          disabled={loading}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-xl disabled:opacity-50"
         >
           Next
         </button>
       </div>
 
-      {/* Playlist Modal */}
+      {/* PLAYLIST MODAL */}
       {openMenu && (
         <div
-          className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center"
+          className="fixed inset-0 bg-black/40 flex justify-center items-center"
           onClick={() => setOpenMenu(null)}
         >
           <div
-            className="w-full md:max-w-md rounded-2xl bg-white border border-slate-200 shadow-xl p-4 md:p-6 mx-4"
+            className="bg-white rounded-xl p-6 w-96"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <ListMusic className="text-indigo-600" />
-                <h3 className="text-lg font-semibold">Add to Playlist</h3>
-              </div>
-              <button
-                className="px-2 py-1 rounded-lg hover:bg-slate-100"
-                onClick={() => setOpenMenu(null)}
-              >
-                Close
-              </button>
-            </div>
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <ListMusic /> Add to Playlist
+            </h3>
 
-            <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
-              {playlist.length === 0 ? (
-                <p className="p-3 text-sm text-slate-500">No playlists available</p>
-              ) : (
-                playlist.map((pl) => (
-                  <button
-                    key={pl.id}
-                    onClick={() => handleAddToPlaylist(openMenu, pl.id)}
-                    className="w-full text-left px-3 py-3 hover:bg-slate-50 rounded-lg flex items-center gap-3"
-                  >
-                    <span className="h-2 w-2 rounded-full bg-indigo-500"></span>
-                    <span className="font-medium">{pl.name}</span>
-                  </button>
-                ))
-              )}
-            </div>
+            {playlist.map((pl) => (
+              <button
+                key={pl.id}
+                onClick={() => handleAddToPlaylist(openMenu, pl.id)}
+                className="block w-full text-left p-2 hover:bg-slate-100 rounded"
+              >
+                {pl.name}
+              </button>
+            ))}
           </div>
         </div>
       )}

@@ -33,13 +33,15 @@ function CreateUser() {
       setError("User Created Successfully ");
       setShouldNavigate(true); 
     } 
-    else {
-      setError(cur.data);
-    }
 
     } catch (error) {
-      setError('Create user failed');
-    }
+  if (error.response && error.response.data) {
+    setError(error.response.data);
+  } else {
+    setError('Create user failed');
+  }
+}
+
   };
   
 
